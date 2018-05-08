@@ -456,7 +456,7 @@ Hermes.prototype = {
      *
      * @param {error} ex An exception to be logged
      * @param {object} options A specific set of options for this error [optional]
-     * @return {Raven}
+     * @return {Hermes}
      */
     captureException(ex, options) {
         options = objectMerge({ trimHeadFrames: 0 }, options ? options : {});
@@ -543,7 +543,7 @@ Hermes.prototype = {
      *
      * @param {string} msg A plain message to be captured in Sentry
      * @param {object} options A specific set of options for this message [optional]
-     * @return {Raven}
+     * @return {Hermes}
      */
     captureMessage(msg, options) {
         // config() automagically converts ignoreErrors from a list to a RegExp so we need to test for an
@@ -581,10 +581,10 @@ Hermes.prototype = {
         // stack[0] is `throw new Error(msg)` call itself, we are interested in the frame that was just before that, stack[1]
         let initialCall = isArray(stack.stack) && stack.stack[1];
 
-        // if stack[1] is `Raven.captureException`, it means that someone passed a string to it and we redirected that call
+        // if stack[1] is `Hermes.captureException`, it means that someone passed a string to it and we redirected that call
         // to be handled by `captureMessage`, thus `initialCall` is the 3rd one, not 2nd
         // initialCall => captureException(string) => captureMessage(string)
-        if (initialCall && initialCall.func === 'Raven.captureException') {
+        if (initialCall && initialCall.func === 'Hermes.captureException') {
             initialCall = stack.stack[2];
         }
 
@@ -661,7 +661,7 @@ Hermes.prototype = {
         let pluginArgs = [].slice.call(arguments, 1);
 
         this._plugins.push([plugin, pluginArgs]);
-        if (this._isRavenInstalled) {
+        if (this._isHermesInstalled) {
             this._drainPlugins();
         }
 
@@ -672,7 +672,7 @@ Hermes.prototype = {
      * Set/clear a user to be sent along with the payload.
      *
      * @param {object} user An object representing user data [optional]
-     * @return {Raven}
+     * @return {Hermes}
      */
     setUserContext(user) {
         // Intentionally do not merge here since that's an unexpected behavior.
@@ -685,7 +685,7 @@ Hermes.prototype = {
      * Merge extra attributes to be sent along with the payload.
      *
      * @param {object} extra An object representing extra data [optional]
-     * @return {Raven}
+     * @return {Hermes}
      */
     setExtraContext(extra) {
         this._mergeContext('extra', extra);
@@ -697,7 +697,7 @@ Hermes.prototype = {
      * Merge tags to be sent along with the payload.
      *
      * @param {object} tags An object representing tags [optional]
-     * @return {Raven}
+     * @return {Hermes}
      */
     setTagsContext(tags) {
         this._mergeContext('tags', tags);
@@ -708,7 +708,7 @@ Hermes.prototype = {
     /*
      * Clear all of the context.
      *
-     * @return {Raven}
+     * @return {Hermes}
      */
     clearContext() {
         this._globalContext = {};
@@ -730,7 +730,7 @@ Hermes.prototype = {
      * Set environment of application
      *
      * @param {string} environment Typically something like 'production'.
-     * @return {Raven}
+     * @return {Hermes}
      */
     setEnvironment(environment) {
         this._globalOptions.environment = environment;
@@ -742,7 +742,7 @@ Hermes.prototype = {
      * Set release version of application
      *
      * @param {string} release Typically something like a git SHA to identify version
-     * @return {Raven}
+     * @return {Hermes}
      */
     setRelease(release) {
         this._globalOptions.release = release;
@@ -755,7 +755,7 @@ Hermes.prototype = {
      *
      * @param {function} callback The callback to run which allows the
      *                            data blob to be mutated before sending
-     * @return {Raven}
+     * @return {Hermes}
      */
     setDataCallback(callback) {
         let original = this._globalOptions.dataCallback;
@@ -768,7 +768,7 @@ Hermes.prototype = {
      *
      * @param {function} callback The callback to run which allows filtering
      *                            or mutating breadcrumbs
-     * @return {Raven}
+     * @return {Hermes}
      */
     setBreadcrumbCallback(callback) {
         let original = this._globalOptions.breadcrumbCallback;
@@ -781,7 +781,7 @@ Hermes.prototype = {
      *
      * @param {function} callback The callback to run which allows
      *                            introspecting the blob before sending
-     * @return {Raven}
+     * @return {Hermes}
      */
     setShouldSendCallback(callback) {
         let original = this._globalOptions.shouldSendCallback;
@@ -796,7 +796,7 @@ Hermes.prototype = {
      * @param {function} transport Function invoked instead of the default
      *                             `makeRequest` handler.
      *
-     * @return {Raven}
+     * @return {Hermes}
      */
     setTransport(transport) {
         this._globalOptions.transport = transport;
@@ -805,7 +805,7 @@ Hermes.prototype = {
     },
 
     /*
-     * Get the latest raw exception that was captured by Raven.
+     * Get the latest raw exception that was captured by Hermes.
      *
      * @return {error}
      */
