@@ -3,7 +3,7 @@
 let TraceKit = require('../vendor/TraceKit/tracekit');
 let stringify = require('../vendor/json-stringify-safe/stringify');
 let md5 = require('../vendor/md5/md5');
-let RavenConfigError = require('./configError');
+let HermesConfigError = require('./configError');
 
 let utils = require('./utils');
 let isErrorEvent = utils.isErrorEvent;
@@ -59,11 +59,11 @@ function keepOriginalCallback(original, callback) {
 }
 
 // First, check for JSON support
-// If there is no JSON, we no-op the core features of Raven
+// If there is no JSON, we no-op the core features of Hermes
 // since JSON is required to encode the payload
-function Raven() {
+function Hermes() {
     this._hasJSON = !!(typeof JSON === 'object' && JSON.stringify);
-    // Raven can run in contexts where there's no document (react-native)
+    // Hermes can run in contexts where there's no document (react-native)
     this._hasDocument = !isUndefined(_document);
     this._hasNavigator = !isUndefined(_navigator);
     this._lastCapturedException = null;
@@ -103,7 +103,7 @@ function Raven() {
         referrerPolicy: supportsReferrerPolicy() ? 'origin' : ''
     };
     this._ignoreOnError = 0;
-    this._isRavenInstalled = false;
+    this._isHermesInstalled = false;
     this._originalErrorStackTraceLimit = Error.stackTraceLimit;
     // capture references to window.console *and* all its methods first
     // before the console plugin has a chance to monkey patch
@@ -126,34 +126,34 @@ function Raven() {
 }
 
 /*
- * The core Raven singleton
+ * The core Hermes singleton
  *
- * @this {Raven}
+ * @this {Hermes}
  */
 
-Raven.prototype = {
-    // Hardcode version string so that raven source can be loaded directly via
+Hermes.prototype = {
+    // Hardcode version string so that hermes source can be loaded directly via
     // webpack (using a build step causes webpack #1617). Grunt verifies that
     // this value matches package.json during build.
     //   See: https://github.com/getsentry/raven-js/issues/465
-    VERSION: '3.24.2',
+    VERSION: '0.0.1',
 
     debug: false,
 
     TraceKit, // alias to TraceKit
 
     /*
-     * Configure Raven with a DSN and extra options
+     * Configure Hermes with a DSN and extra options
      *
      * @param {string} dsn The public Sentry DSN
      * @param {object} options Set of global options [optional]
-     * @return {Raven}
+     * @return {Hermes}
      */
     config(dsn, options) {
         let self = this;
 
         if (self._globalServer) {
-            this._logDebug('error', 'Error: Raven has already been configured');
+            this._logDebug('error', 'Error: Hermes has already been configured');
             return self;
         }
         if (!dsn) {
@@ -228,11 +228,11 @@ Raven.prototype = {
      * At this point, install() is required to be called due
      * to the way TraceKit is set up.
      *
-     * @return {Raven}
+     * @return {Hermes}
      */
     install() {
         let self = this;
-        if (self.isSetup() && !self._isRavenInstalled) {
+        if (self.isSetup() && !self._isHermesInstalled) {
             TraceKit.report.subscribe(function() {
                 self._handleOnErrorStackInfo(...arguments);
             });
@@ -254,7 +254,7 @@ Raven.prototype = {
             // Install all of the plugins
             self._drainPlugins();
 
-            self._isRavenInstalled = true;
+            self._isHermesInstalled = true;
         }
 
         Error.stackTraceLimit = self._globalOptions.stackTraceLimit;
@@ -287,7 +287,7 @@ Raven.prototype = {
     },
 
     /*
-     * Wrap code within a context so Raven can capture errors
+     * Wrap code within a context so Hermes can capture errors
      * reliably across domains that is executed immediately.
      *
      * @param {object} options A specific set of options for this context [optional]
@@ -334,13 +334,13 @@ Raven.prototype = {
 
         // We don't wanna wrap it twice!
         try {
-            if (func.__raven__) {
+            if (func.__hermes__) {
                 return func;
             }
 
             // If this has already been wrapped in the past, return that
-            if (func.__raven_wrapper__) {
-                return func.__raven_wrapper__;
+            if (func.__hermes_wrapper__) {
+                return func.__hermes_wrapper__;
             }
         } catch (e) {
             // Just accessing custom props in some Selenium environments
@@ -385,10 +385,10 @@ Raven.prototype = {
         }
         wrapped.prototype = func.prototype;
 
-        func.__raven_wrapper__ = wrapped;
+        func.__hermes_wrapper__ = wrapped;
         // Signal that this function has been wrapped/filled already
         // for both debugging and to prevent it to being wrapped/filled twice
-        wrapped.__raven__ = true;
+        wrapped.__hermes__ = true;
         wrapped.__orig__ = func;
 
         return wrapped;
@@ -397,7 +397,7 @@ Raven.prototype = {
     /**
      * Uninstalls the global error handler.
      *
-     * @return {Raven}
+     * @return {Hermes}
      */
     uninstall() {
         TraceKit.report.uninstall();
@@ -408,7 +408,7 @@ Raven.prototype = {
         this._restoreConsole();
 
         Error.stackTraceLimit = this._originalErrorStackTraceLimit;
-        this._isRavenInstalled = false;
+        this._isHermesInstalled = false;
 
         return this;
     },
@@ -422,7 +422,7 @@ Raven.prototype = {
      * @return void
      */
     _promiseRejectionHandler(event) {
-        this._logDebug('debug', 'Raven caught unhandled promise rejection:', event);
+        this._logDebug('debug', 'Hermes caught unhandled promise rejection:', event);
         this.captureException(event.reason, {
             extra: {
                 unhandledPromiseRejection: true
@@ -433,7 +433,7 @@ Raven.prototype = {
     /**
      * Installs the global promise rejection handler.
      *
-     * @return {raven}
+     * @return {Hermes}
      */
     _attachPromiseRejectionHandler() {
         this._promiseRejectionHandler = this._promiseRejectionHandler.bind(this);
@@ -444,7 +444,7 @@ Raven.prototype = {
     /**
      * Uninstalls the global promise rejection handler.
      *
-     * @return {raven}
+     * @return {Hermes}
      */
     _detachPromiseRejectionHandler() {
         _window.removeEventListener && _window.removeEventListener('unhandledrejection', this._promiseRejectionHandler);
@@ -823,7 +823,7 @@ Raven.prototype = {
     },
 
     /*
-     * Determine if Raven is setup and ready to go.
+     * Determine if Hermes is setup and ready to go.
      *
      * @return {boolean}
      */
@@ -832,9 +832,9 @@ Raven.prototype = {
             return false;
         } // needs JSON support
         if (!this._globalServer) {
-            if (!this.ravenNotConfiguredError) {
-                this.ravenNotConfiguredError = true;
-                this._logDebug('error', 'Error: Raven has not been configured.');
+            if (!this.hermesNotConfiguredError) {
+                this.hermesNotConfiguredError = true;
+                this._logDebug('error', 'Error: Hermes has not been configured.');
             }
             return false;
         }
@@ -862,12 +862,12 @@ Raven.prototype = {
 
         let lastEventId = options.eventId || this.lastEventId();
         if (!lastEventId) {
-            throw new RavenConfigError('Missing eventId');
+            throw new HermesConfigError('Missing eventId');
         }
 
         let dsn = options.dsn || this._dsn;
         if (!dsn) {
-            throw new RavenConfigError('Missing DSN');
+            throw new HermesConfigError('Missing DSN');
         }
 
         let encode = encodeURIComponent;
@@ -1513,11 +1513,11 @@ Raven.prototype = {
                 dsn[dsnKeys[i]] = m[i] || '';
             }
         } catch (e) {
-            throw new RavenConfigError(`Invalid DSN: ${str}`);
+            throw new HermesConfigError(`Invalid DSN: ${str}`);
         }
 
         if (dsn.pass && !this._globalOptions.allowSecretKey) {
-            throw new RavenConfigError('Do not specify your secret key in the DSN. See: http://bit.ly/raven-secret-key');
+            throw new HermesConfigError('Do not specify your secret key in the DSN. See: http://bit.ly/raven-secret-key');
         }
 
         return dsn;
@@ -1908,7 +1908,7 @@ Raven.prototype = {
         // Backoff state: Sentry server previously responded w/ an error (e.g. 429 - too many requests),
         // so drop requests until "cool-off" period has elapsed.
         if (this._shouldBackoff()) {
-            this._logDebug('warn', 'Raven dropped error due to backoff: ', data);
+            this._logDebug('warn', 'Hermes dropped error due to backoff: ', data);
             return;
         }
 
@@ -1944,7 +1944,7 @@ Raven.prototype = {
         // but this would require copying an un-truncated copy of the data packet, which can be
         // arbitrarily deep (extra_data) -- could be worthwhile? will revisit
         if (!this._globalOptions.allowDuplicates && this._isRepeatData(data)) {
-            this._logDebug('warn', 'Raven dropped repeat event: ', data);
+            this._logDebug('warn', 'Hermes dropped repeat event: ', data);
             return;
         }
 
@@ -1956,7 +1956,7 @@ Raven.prototype = {
         // Store outbound payload after trim
         this._lastData = data;
 
-        this._logDebug('debug', 'Raven about to send:', data);
+        this._logDebug('debug', 'Hermes about to send:', data);
 
         let auth = {
             sentry_version: '7',
@@ -1996,7 +1996,7 @@ Raven.prototype = {
                 callback && callback();
             },
             onError: function failure(error) {
-                self._logDebug('error', 'Raven transport failed to send: ', error);
+                self._logDebug('error', 'Hermes transport failed to send: ', error);
 
                 if (error.request) {
                     self._setBackoffState(error.request);
@@ -2123,7 +2123,7 @@ Raven.prototype = {
     },
 
     _logDebug(level) {
-        // We allow `Raven.debug` and `Raven.config(DSN, { debug: true })` to not make backward incompatible API change
+        // We allow `Hermes.debug` and `Hermes.config(DSN, { debug: true })` to not make backward incompatible API change
         if (this._originalConsoleMethods[level] && (this.debug || this._globalOptions.debug)) {
             // In IE<10 console methods do not have their own 'apply' method
             Function.prototype.apply.call(this._originalConsoleMethods[level], this._originalConsole, [].slice.call(arguments, 1));
@@ -2140,7 +2140,7 @@ Raven.prototype = {
 };
 
 // Deprecations
-Raven.prototype.setUser = Raven.prototype.setUserContext;
-Raven.prototype.setReleaseContext = Raven.prototype.setRelease;
+Hermes.prototype.setUser = Hermes.prototype.setUserContext;
+Hermes.prototype.setReleaseContext = Hermes.prototype.setRelease;
 
-module.exports = Raven;
+module.exports = Hermes;

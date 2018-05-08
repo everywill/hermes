@@ -1,8 +1,8 @@
-function RavenConfigError(message) {
-    this.name = 'RavenConfigError';
+function HermesConfigError(message) {
+    this.name = 'HermesConfigError';
     this.message = message;
 }
-RavenConfigError.prototype = new Error();
-RavenConfigError.prototype.constructor = RavenConfigError;
+HermesConfigError.prototype = new Error();
+HermesConfigError.prototype.constructor = HermesConfigError;
 
-module.exports = RavenConfigError;
+module.exports = HermesConfigError;

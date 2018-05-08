@@ -12,6 +12,7 @@ module.exports = {
     rules: {
         'no-unused-vars': ['error', { ignoreRestSiblings: true }],
         'max-statements': 'off',
-        'no-use-before-define': 'off'
+        'no-use-before-define': 'off',
+        camelcase: 'off'
     }
 };
