@@ -25,12 +25,10 @@
   },
   "lint-staged": {
     "src/**/*.js": [
-      "eslint",
       "prettier-eslint --write",
       "git add"
     ],
     "vendor/**/*.js": [
-      "eslint",
       "prettier-eslint --write",
       "git add"
     ]
