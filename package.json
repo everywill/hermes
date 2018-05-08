@@ -24,11 +24,7 @@
     "prettier-eslint-cli": "^4.7.1"
   },
   "lint-staged": {
-    "src/**/*.js": [
-      "prettier-eslint --write",
-      "git add"
-    ],
-    "vendor/**/*.js": [
+    "*.js": [
       "prettier-eslint --write",
       "git add"
     ]

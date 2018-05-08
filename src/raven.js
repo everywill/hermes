@@ -1108,9 +1108,8 @@ Raven.prototype = {
                 // can just call the original function directly.
                 if (orig.apply) {
                     return orig.apply(this, args);
-                } 
+                }
                 return orig(args[0], args[1]);
-                
             };
         }
 
@@ -1122,63 +1121,65 @@ Raven.prototype = {
                 fill(
                     proto,
                     'addEventListener',
-                    orig => function(evtName, fn, capture, secure) {
-                        // preserve arity
-                        try {
-                            if (fn && fn.handleEvent) {
-                                fn.handleEvent = self.wrap(fn.handleEvent);
+                    orig =>
+                        function(evtName, fn, capture, secure) {
+                            // preserve arity
+                            try {
+                                if (fn && fn.handleEvent) {
+                                    fn.handleEvent = self.wrap(fn.handleEvent);
+                                }
+                            } catch (err) {
+                                // can sometimes get 'Permission denied to access property "handle Event'
                             }
-                        } catch (err) {
-                            // can sometimes get 'Permission denied to access property "handle Event'
-                        }
 
-                        // More breadcrumb DOM capture ... done here and not in `_instrumentBreadcrumbs`
-                        // so that we don't have more than one wrapper function
-                        let before, clickHandler, keypressHandler;
+                            // More breadcrumb DOM capture ... done here and not in `_instrumentBreadcrumbs`
+                            // so that we don't have more than one wrapper function
+                            let before, clickHandler, keypressHandler;
 
-                        if (autoBreadcrumbs && autoBreadcrumbs.dom && (global === 'EventTarget' || global === 'Node')) {
-                            // NOTE: generating multiple handlers per addEventListener invocation, should
-                            //       revisit and verify we can just use one (almost certainly)
-                            clickHandler = self._breadcrumbEventHandler('click');
-                            keypressHandler = self._keypressEventHandler();
-                            before = function(evt) {
-                                // need to intercept every DOM event in `before` argument, in case that
-                                // same wrapped method is re-used for different events (e.g. mousemove THEN click)
-                                // see #724
-                                if (!evt) {
-                                    return;
-                                }
+                            if (autoBreadcrumbs && autoBreadcrumbs.dom && (global === 'EventTarget' || global === 'Node')) {
+                                // NOTE: generating multiple handlers per addEventListener invocation, should
+                                //       revisit and verify we can just use one (almost certainly)
+                                clickHandler = self._breadcrumbEventHandler('click');
+                                keypressHandler = self._keypressEventHandler();
+                                before = function(evt) {
+                                    // need to intercept every DOM event in `before` argument, in case that
+                                    // same wrapped method is re-used for different events (e.g. mousemove THEN click)
+                                    // see #724
+                                    if (!evt) {
+                                        return;
+                                    }
 
-                                let eventType;
-                                try {
-                                    eventType = evt.type;
-                                } catch (e) {
-                                    // just accessing event properties can throw an exception in some rare circumstances
-                                    // see: https://github.com/getsentry/raven-js/issues/838
-                                    return;
-                                }
-                                if (eventType === 'click') {
-                                    return clickHandler(evt);
-                                } else if (eventType === 'keypress') {
-                                    return keypressHandler(evt);
-                                }
-                            };
-                        }
-                        return orig.call(this, evtName, self.wrap(fn, undefined, before), capture, secure);
-                    },
+                                    let eventType;
+                                    try {
+                                        eventType = evt.type;
+                                    } catch (e) {
+                                        // just accessing event properties can throw an exception in some rare circumstances
+                                        // see: https://github.com/getsentry/raven-js/issues/838
+                                        return;
+                                    }
+                                    if (eventType === 'click') {
+                                        return clickHandler(evt);
+                                    } else if (eventType === 'keypress') {
+                                        return keypressHandler(evt);
+                                    }
+                                };
+                            }
+                            return orig.call(this, evtName, self.wrap(fn, undefined, before), capture, secure);
+                        },
                     wrappedBuiltIns
                 );
                 fill(
                     proto,
                     'removeEventListener',
-                    orig => function(evt, fn, capture, secure) {
-                        try {
-                            fn = fn && (fn.__raven_wrapper__ ? fn.__raven_wrapper__ : fn);
-                        } catch (e) {
-                            // ignore, accessing __raven_wrapper__ will throw in some Selenium environments
-                        }
-                        return orig.call(this, evt, fn, capture, secure);
-                    },
+                    orig =>
+                        function(evt, fn, capture, secure) {
+                            try {
+                                fn = fn && (fn.__raven_wrapper__ ? fn.__raven_wrapper__ : fn);
+                            } catch (e) {
+                                // ignore, accessing __raven_wrapper__ will throw in some Selenium environments
+                            }
+                            return orig.call(this, evt, fn, capture, secure);
+                        },
                     wrappedBuiltIns
                 );
             }
@@ -1190,9 +1191,10 @@ Raven.prototype = {
             fill(
                 _window,
                 'requestAnimationFrame',
-                orig => function(cb) {
-                    return orig(self.wrap(cb));
-                },
+                orig =>
+                    function(cb) {
+                        return orig(self.wrap(cb));
+                    },
                 wrappedBuiltIns
             );
         }
@@ -1261,67 +1263,69 @@ Raven.prototype = {
             fill(
                 xhrproto,
                 'open',
-                origOpen => function(method, url) {
-                    // preserve arity
+                origOpen =>
+                    function(method, url) {
+                        // preserve arity
 
-                    // if Sentry key appears in URL, don't capture
-                    if (isString(url) && url.indexOf(self._globalKey) === -1) {
-                        this.__raven_xhr = {
-                            method,
-                            url,
-                            status_code: null
-                        };
-                    }
+                        // if Sentry key appears in URL, don't capture
+                        if (isString(url) && url.indexOf(self._globalKey) === -1) {
+                            this.__raven_xhr = {
+                                method,
+                                url,
+                                status_code: null
+                            };
+                        }
 
-                    return origOpen.apply(this, arguments);
-                },
+                        return origOpen.apply(this, arguments);
+                    },
                 wrappedBuiltIns
             );
 
             fill(
                 xhrproto,
                 'send',
-                origSend => function() {
-                    // preserve arity
-                    let xhr = this;
+                origSend =>
+                    function() {
+                        // preserve arity
+                        let xhr = this;
 
-                    function onreadystatechangeHandler() {
-                        if (xhr.__raven_xhr && xhr.readyState === 4) {
-                            try {
-                                // touching statusCode in some platforms throws
-                                // an exception
-                                xhr.__raven_xhr.status_code = xhr.status;
-                            } catch (e) {
-                                /* do nothing */
+                        function onreadystatechangeHandler() {
+                            if (xhr.__raven_xhr && xhr.readyState === 4) {
+                                try {
+                                    // touching statusCode in some platforms throws
+                                    // an exception
+                                    xhr.__raven_xhr.status_code = xhr.status;
+                                } catch (e) {
+                                    /* do nothing */
+                                }
+
+                                self.captureBreadcrumb({
+                                    type: 'http',
+                                    category: 'xhr',
+                                    data: xhr.__raven_xhr
+                                });
                             }
-
-                            self.captureBreadcrumb({
-                                type: 'http',
-                                category: 'xhr',
-                                data: xhr.__raven_xhr
-                            });
                         }
-                    }
 
-                    let props = ['onload', 'onerror', 'onprogress'];
-                    for (let j = 0; j < props.length; j++) {
-                        wrapProp(props[j], xhr);
-                    }
+                        let props = ['onload', 'onerror', 'onprogress'];
+                        for (let j = 0; j < props.length; j++) {
+                            wrapProp(props[j], xhr);
+                        }
 
-                    if ('onreadystatechange' in xhr && isFunction(xhr.onreadystatechange)) {
-                        fill(
-                            xhr,
-                            'onreadystatechange',
-                            orig => self.wrap(orig, undefined, onreadystatechangeHandler) /* intentionally don't track this instrumentation */
-                        );
-                    } else {
-                        // if onreadystatechange wasn't actually set by the page on this xhr, we
-                        // are free to set our own and capture the breadcrumb
-                        xhr.onreadystatechange = onreadystatechangeHandler;
-                    }
+                        if ('onreadystatechange' in xhr && isFunction(xhr.onreadystatechange)) {
+                            fill(
+                                xhr,
+                                'onreadystatechange',
+                                orig => self.wrap(orig, undefined, onreadystatechangeHandler) /* intentionally don't track this instrumentation */
+                            );
+                        } else {
+                            // if onreadystatechange wasn't actually set by the page on this xhr, we
+                            // are free to set our own and capture the breadcrumb
+                            xhr.onreadystatechange = onreadystatechangeHandler;
+                        }
 
-                    return origSend.apply(this, arguments);
-                },
+                        return origSend.apply(this, arguments);
+                    },
                 wrappedBuiltIns
             );
         }
@@ -1330,70 +1334,71 @@ Raven.prototype = {
             fill(
                 _window,
                 'fetch',
-                origFetch => function() {
-                    // preserve arity
-                    // Make a copy of the arguments to prevent deoptimization
-                    // https://github.com/petkaantonov/bluebird/wiki/Optimization-killers#32-leaking-arguments
-                    let args = new Array(arguments.length);
-                    for (let i = 0; i < args.length; ++i) {
-                        args[i] = arguments[i];
-                    }
-
-                    let fetchInput = args[0];
-                    let method = 'GET';
-                    let url;
-
-                    if (typeof fetchInput === 'string') {
-                        url = fetchInput;
-                    } else if ('Request' in _window && fetchInput instanceof _window.Request) {
-                        url = fetchInput.url;
-                        if (fetchInput.method) {
-                            method = fetchInput.method;
+                origFetch =>
+                    function() {
+                        // preserve arity
+                        // Make a copy of the arguments to prevent deoptimization
+                        // https://github.com/petkaantonov/bluebird/wiki/Optimization-killers#32-leaking-arguments
+                        let args = new Array(arguments.length);
+                        for (let i = 0; i < args.length; ++i) {
+                            args[i] = arguments[i];
                         }
-                    } else {
-                        url = `${fetchInput}`;
-                    }
 
-                    // if Sentry key appears in URL, don't capture, as it's our own request
-                    if (url.indexOf(self._globalKey) !== -1) {
-                        return origFetch.apply(this, args);
-                    }
+                        let fetchInput = args[0];
+                        let method = 'GET';
+                        let url;
 
-                    if (args[1] && args[1].method) {
-                        method = args[1].method;
-                    }
+                        if (typeof fetchInput === 'string') {
+                            url = fetchInput;
+                        } else if ('Request' in _window && fetchInput instanceof _window.Request) {
+                            url = fetchInput.url;
+                            if (fetchInput.method) {
+                                method = fetchInput.method;
+                            }
+                        } else {
+                            url = `${fetchInput}`;
+                        }
 
-                    let fetchData = {
-                        method,
-                        url,
-                        status_code: null
-                    };
+                        // if Sentry key appears in URL, don't capture, as it's our own request
+                        if (url.indexOf(self._globalKey) !== -1) {
+                            return origFetch.apply(this, args);
+                        }
 
-                    return origFetch
-                        .apply(this, args)
-                        .then((response) => {
-                            fetchData.status_code = response.status;
+                        if (args[1] && args[1].method) {
+                            method = args[1].method;
+                        }
 
-                            self.captureBreadcrumb({
-                                type: 'http',
-                                category: 'fetch',
-                                data: fetchData
+                        let fetchData = {
+                            method,
+                            url,
+                            status_code: null
+                        };
+
+                        return origFetch
+                            .apply(this, args)
+                            .then((response) => {
+                                fetchData.status_code = response.status;
+
+                                self.captureBreadcrumb({
+                                    type: 'http',
+                                    category: 'fetch',
+                                    data: fetchData
+                                });
+
+                                return response;
+                            })
+                            .catch((err) => {
+                                // if there is an error performing the request
+                                self.captureBreadcrumb({
+                                    type: 'http',
+                                    category: 'fetch',
+                                    data: fetchData,
+                                    level: 'error'
+                                });
+
+                                throw err;
                             });
-
-                            return response;
-                        })
-                        .catch((err) => {
-                            // if there is an error performing the request
-                            self.captureBreadcrumb({
-                                type: 'http',
-                                category: 'fetch',
-                                data: fetchData,
-                                level: 'error'
-                            });
-
-                            throw err;
-                        });
-                },
+                    },
                 wrappedBuiltIns
             );
         }
