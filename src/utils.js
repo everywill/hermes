@@ -282,14 +282,13 @@ function uuid4() {
         };
 
         return pad(arr[0]) + pad(arr[1]) + pad(arr[2]) + pad(arr[3]) + pad(arr[4]) + pad(arr[5]) + pad(arr[6]) + pad(arr[7]);
-    } 
+    }
     // http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/2117523#2117523
     return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
         let r = (Math.random() * 16) | 0,
             v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
     });
-    
 }
 
 /**
@@ -448,7 +447,7 @@ function fill(obj, name, replacement, track) {
     }
     let orig = obj[name];
     obj[name] = replacement(orig);
-    obj[name].__raven__ = true;
+    obj[name].__hermes__ = true;
     obj[name].__orig__ = orig;
     if (track) {
         track.push([obj, name, orig]);

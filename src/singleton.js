@@ -1,31 +1,31 @@
 /**
- * Enforces a single instance of the Raven client, and the
- * main entry point for Raven. If you are a consumer of the
- * Raven library, you SHOULD load this file (vs raven.js).
+ * Enforces a single instance of the Hermes client, and the
+ * main entry point for Hermes. If you are a consumer of the
+ * Hermes library, you SHOULD load this file (vs hermes.js).
  **/
 
-let RavenConstructor = require('./raven');
+let HermesConstructor = require('./hermes');
 
 // This is to be defensive in environments where window does not exist (see https://github.com/getsentry/raven-js/pull/785)
 let _window = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
-let _Raven = _window.Raven;
+let _Hermes = _window.Hermes;
 
-let Raven = new RavenConstructor();
+let Hermes = new HermesConstructor();
 
 /*
- * Allow multiple versions of Raven to be installed.
- * Strip Raven from the global context and returns the instance.
+ * Allow multiple versions of Hermes to be installed.
+ * Strip Hermes from the global context and returns the instance.
  *
- * @return {Raven}
+ * @return {Hermes}
  */
-Raven.noConflict = function() {
-    _window.Raven = _Raven;
-    return Raven;
+Hermes.noConflict = function() {
+    _window.Hermes = _Hermes;
+    return Hermes;
 };
 
-Raven.afterLoad();
+Hermes.afterLoad();
 
-module.exports = Raven;
+module.exports = Hermes;
 
 /**
  * DISCLAIMER:
@@ -61,4 +61,4 @@ module.exports = Raven;
  *
  * It should "just work".
  */
-module.exports.Client = RavenConstructor;
+module.exports.Client = HermesConstructor;

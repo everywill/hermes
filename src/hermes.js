@@ -844,10 +844,10 @@ Hermes.prototype = {
     afterLoad() {
         // TODO: remove window dependence?
 
-        // Attempt to initialize Raven on load
-        let RavenConfig = _window.RavenConfig;
-        if (RavenConfig) {
-            this.config(RavenConfig.dsn, RavenConfig.config).install();
+        // Attempt to initialize Hermes on load
+        let HermesConfig = _window.HermesConfig;
+        if (HermesConfig) {
+            this.config(HermesConfig.dsn, HermesConfig.config).install();
         }
     },
 
@@ -913,7 +913,7 @@ Hermes.prototype = {
 
         options = options || {};
 
-        eventType = `raven${eventType.substr(0, 1).toUpperCase()}${eventType.substr(1)}`;
+        eventType = `hermes${eventType.substr(0, 1).toUpperCase()}${eventType.substr(1)}`;
 
         if (_document.createEvent) {
             evt = _document.createEvent('HTMLEvents');
@@ -1066,7 +1066,7 @@ Hermes.prototype = {
         self._originalFunctionToString = Function.prototype.toString;
         // eslint-disable-next-line no-extend-native
         Function.prototype.toString = function() {
-            if (typeof this === 'function' && this.__raven__) {
+            if (typeof this === 'function' && this.__hermes__) {
                 return self._originalFunctionToString.apply(this.__orig__, arguments);
             }
             return self._originalFunctionToString.apply(this, arguments);
@@ -1174,9 +1174,9 @@ Hermes.prototype = {
                     orig =>
                         function(evt, fn, capture, secure) {
                             try {
-                                fn = fn && (fn.__raven_wrapper__ ? fn.__raven_wrapper__ : fn);
+                                fn = fn && (fn.__hermes_wrapper__ ? fn.__hermes_wrapper__ : fn);
                             } catch (e) {
-                                // ignore, accessing __raven_wrapper__ will throw in some Selenium environments
+                                // ignore, accessing __hermes_wrapper__ will throw in some Selenium environments
                             }
                             return orig.call(this, evt, fn, capture, secure);
                         },
@@ -1269,7 +1269,7 @@ Hermes.prototype = {
 
                         // if Sentry key appears in URL, don't capture
                         if (isString(url) && url.indexOf(self._globalKey) === -1) {
-                            this.__raven_xhr = {
+                            this.__hermes_xhr = {
                                 method,
                                 url,
                                 status_code: null
@@ -1290,11 +1290,11 @@ Hermes.prototype = {
                         let xhr = this;
 
                         function onreadystatechangeHandler() {
-                            if (xhr.__raven_xhr && xhr.readyState === 4) {
+                            if (xhr.__hermes_xhr && xhr.readyState === 4) {
                                 try {
                                     // touching statusCode in some platforms throws
                                     // an exception
-                                    xhr.__raven_xhr.status_code = xhr.status;
+                                    xhr.__hermes_xhr.status_code = xhr.status;
                                 } catch (e) {
                                     /* do nothing */
                                 }
@@ -1302,7 +1302,7 @@ Hermes.prototype = {
                                 self.captureBreadcrumb({
                                     type: 'http',
                                     category: 'xhr',
-                                    data: xhr.__raven_xhr
+                                    data: xhr.__hermes_xhr
                                 });
                             }
                         }
@@ -1517,7 +1517,7 @@ Hermes.prototype = {
         }
 
         if (dsn.pass && !this._globalOptions.allowSecretKey) {
-            throw new HermesConfigError('Do not specify your secret key in the DSN. See: http://bit.ly/raven-secret-key');
+            throw new HermesConfigError('Do not specify your secret key in the DSN. ');
         }
 
         return dsn;
@@ -1595,10 +1595,10 @@ Hermes.prototype = {
         // first we check the global includePaths list.
         (
             (!!this._globalOptions.includePaths.test && !this._globalOptions.includePaths.test(normalized.filename)) ||
-            // Now we check for fun, if the function name is Raven or TraceKit
-            /(Raven|TraceKit)\./.test(normalized.function) ||
-            // finally, we do a last ditch effort and check for raven.min.js
-            /raven\.(min\.)?js$/.test(normalized.filename)
+            // Now we check for fun, if the function name is Hermes or TraceKit
+            /(Hermes|TraceKit)\./.test(normalized.function) ||
+            // finally, we do a last ditch effort and check for hermes.min.js
+            /hermes\.(min\.)?js$/.test(normalized.filename)
         );
 
         return normalized;
@@ -1960,7 +1960,7 @@ Hermes.prototype = {
 
         let auth = {
             sentry_version: '7',
-            sentry_client: `raven-js/${this.VERSION}`,
+            sentry_client: `hermes-js/${this.VERSION}`,
             sentry_key: this._globalKey
         };
 
@@ -2006,7 +2006,7 @@ Hermes.prototype = {
                     data,
                     src: url
                 });
-                error = error || new Error('Raven send failed (no additional details provided)');
+                error = error || new Error('Hermes send failed (no additional details provided)');
                 callback && callback(error);
             }
         });

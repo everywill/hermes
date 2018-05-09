@@ -22,7 +22,8 @@
     "husky": "^0.14.3",
     "lint-staged": "^7.1.0",
     "prettier": "^1.12.1",
-    "prettier-eslint-cli": "^4.7.1"
+    "prettier-eslint-cli": "^4.7.1",
+    "webpack": "^4.8.1"
   },
   "lint-staged": {
     "*.js": [
