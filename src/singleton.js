@@ -10,7 +10,7 @@ let HermesConstructor = require('./hermes');
 let _window = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 let _Hermes = _window.Hermes;
 
-let Hermes = new HermesConstructor();
+const Hermes = new HermesConstructor();
 
 /*
  * Allow multiple versions of Hermes to be installed.

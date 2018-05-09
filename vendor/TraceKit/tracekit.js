@@ -237,9 +237,8 @@ TraceKit.report = (function reportModuleWrapper() {
         if (lastExceptionStack) {
             if (lastException === ex) {
                 return; // already caught by an inner catch block, ignore
-            } 
+            }
             processLastException();
-            
         }
 
         let stack = TraceKit.computeStackTrace(ex);
@@ -492,9 +491,8 @@ TraceKit.computeStackTrace = (function computeStackTraceWrapper() {
             stackInfo.stack.unshift(initial);
             stackInfo.partial = true;
             return true;
-        } 
+        }
         stackInfo.incomplete = true;
-        
 
         return false;
     }

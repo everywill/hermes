@@ -70,5 +70,5 @@ function stringify(obj, replacer, spaces, cycleReplacer) {
     return JSON.stringify(obj, serializer(replacer, cycleReplacer), spaces);
 }
 
-exports = module.exports = stringify;
-exports.getSerialize = serializer;
+module.exports = stringify;
+module.exports.getSerialize = serializer;

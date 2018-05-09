@@ -4,7 +4,9 @@ module.exports = {
     entry: path.resolve(__dirname, 'src/singleton'),
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'hermes.min.js'
+        library: 'Hermes',
+        libraryTarget: 'umd',
+        filename: 'hermes.js'
     },
     module: {
         rules: [
@@ -19,5 +21,5 @@ module.exports = {
         ]
     },
     plugins: [],
-    mode: 'production'
+    mode: 'development'
 };

@@ -1,8 +1,8 @@
 {
-  "name": "apollo-sdk",
+  "name": "@kaola/hermes",
   "version": "0.0.1",
-  "description": "Apollo js-sdk",
-  "main": "index.js",
+  "description": "Apollo SDK for javascript",
+  "main": "dist/hermes.min.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "precommit": "lint-staged",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "ssh://git@g.hz.netease.com:22222/apollo/apollo-sdk.git"
+    "url": "ssh://git@g.hz.netease.com:22222/apollo/hermes.git"
   },
   "author": "everywill",
   "license": "ISC",
