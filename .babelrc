@@ -1,0 +1,11 @@
+{
+    "presets": [
+        ["env", {
+            "modules": false,
+            "target": {
+                "browsers": ["last 2 versions", "ie >= 10"]
+            }
+        }]
+    ],
+    "plugins": ["transform-runtime"]
+}
