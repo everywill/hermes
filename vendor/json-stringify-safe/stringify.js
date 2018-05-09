@@ -10,68 +10,64 @@
 */
 
 function indexOf(haystack, needle) {
-  for (let i = 0; i < haystack.length; ++i) {
-    if (haystack[i] === needle) {
-      return i;
+    for (let i = 0; i < haystack.length; ++i) {
+        if (haystack[i] === needle) {
+            return i;
+        }
     }
-  }
-  return -1;
+    return -1;
 }
 
 // https://github.com/ftlabs/js-abbreviate/blob/fa709e5f139e7770a71827b1893f22418097fbda/index.js#L95-L106
 function stringifyError(value) {
-  let err = {
-    // These properties are implemented as magical getters and don't show up in for in
-    stack: value.stack,
-    message: value.message,
-    name: value.name
-  };
+    let err = {
+        // These properties are implemented as magical getters and don't show up in for in
+        stack: value.stack,
+        message: value.message,
+        name: value.name
+    };
 
-  for (let i in value) {
-    if (Object.prototype.hasOwnProperty.call(value, i)) {
-      err[i] = value[i];
+    for (let i in value) {
+        if (Object.prototype.hasOwnProperty.call(value, i)) {
+            err[i] = value[i];
+        }
     }
-  }
 
-  return err;
+    return err;
 }
 
 function serializer(replacer, cycleReplacer) {
-  let stack = [];
-  let keys = [];
+    let stack = [];
+    let keys = [];
 
-  if (cycleReplacer == null) {
-    cycleReplacer = function(key, value) {
-      if (stack[0] === value) {
-        return "[Circular ~]";
-      }
-      return `[Circular ~.${keys.slice(0, indexOf(stack, value)).join(".")}]`;
-    };
-  }
-
-  return function(key, value) {
-    if (stack.length > 0) {
-      let thisPos = indexOf(stack, this);
-      ~thisPos ? stack.splice(thisPos + 1) : stack.push(this);
-      ~thisPos ? keys.splice(thisPos, Infinity, key) : keys.push(key);
-
-      if (~indexOf(stack, value)) {
-        value = cycleReplacer.call(this, key, value);
-      }
-    } else {
-      stack.push(value);
+    if (cycleReplacer == null) {
+        cycleReplacer = function(key, value) {
+            if (stack[0] === value) {
+                return '[Circular ~]';
+            }
+            return `[Circular ~.${keys.slice(0, indexOf(stack, value)).join('.')}]`;
+        };
     }
 
-    return replacer == null
-      ? value instanceof Error
-        ? stringifyError(value)
-        : value
-      : replacer.call(this, key, value);
-  };
+    return function(key, value) {
+        if (stack.length > 0) {
+            let thisPos = indexOf(stack, this);
+            ~thisPos ? stack.splice(thisPos + 1) : stack.push(this);
+            ~thisPos ? keys.splice(thisPos, Infinity, key) : keys.push(key);
+
+            if (~indexOf(stack, value)) {
+                value = cycleReplacer.call(this, key, value);
+            }
+        } else {
+            stack.push(value);
+        }
+
+        return replacer == null ? (value instanceof Error ? stringifyError(value) : value) : replacer.call(this, key, value);
+    };
 }
 
 function stringify(obj, replacer, spaces, cycleReplacer) {
-  return JSON.stringify(obj, serializer(replacer, cycleReplacer), spaces);
+    return JSON.stringify(obj, serializer(replacer, cycleReplacer), spaces);
 }
 
 exports = module.exports = stringify;
