@@ -1,6 +1,7 @@
 /*global XDomainRequest:false */
 
 let TraceKit = require('../vendor/TraceKit/tracekit');
+let JankMonitor = require('../vendor/performance/jank-monitor');
 let stringify = require('../vendor/json-stringify-safe/stringify');
 let md5 = require('../vendor/md5/md5');
 let HermesConfigError = require('./configError');
@@ -91,7 +92,9 @@ function Hermes() {
         autoBreadcrumbs: true,
         instrument: true,
         sampleRate: 1,
-        sanitizeKeys: []
+        sanitizeKeys: [],
+        monitorJank: false,
+        performanceTiming: true
     };
     this._fetchDefaults = {
         method: 'POST',
@@ -249,6 +252,22 @@ Hermes.prototype = {
 
             if (self._globalOptions.autoBreadcrumbs) {
                 self._instrumentBreadcrumbs();
+            }
+
+            if (self._globalOptions.monitorJank) {
+                self._jankMonitor = new JankMonitor({
+                    name: 'Tester',
+                    slowStandard: 400,
+                    eventTimeout: 2500,
+                    onSlowFunc(data) {
+                        console.log(data);
+                    }
+                });
+            }
+
+            if (self._globalOptions.performanceTiming) {
+                let timing = require('../vendor/performance/timing');
+                console.log(timing);
             }
 
             // Install all of the plugins
