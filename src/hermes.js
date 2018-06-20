@@ -1294,7 +1294,7 @@ Hermes.prototype = {
                 origOpen =>
                     function(method, url) {
                         // preserve arity
-
+                        let xhr = this;
                         // if Sentry key appears in URL, don't capture
                         if (isString(url) && url.indexOf(self._globalKey) === -1) {
                             this.__hermes_xhr = {
@@ -1304,7 +1304,12 @@ Hermes.prototype = {
                             };
                         }
 
-                        return origOpen.apply(this, arguments);
+                        origOpen.apply(this, arguments);
+                        if (url.indexOf('hubble.netease.com') === -1) {
+                            xhr.setRequestHeader('X-Requested-User', self._username);
+                        }
+
+                        return;
                     },
                 wrappedBuiltIns
             );
@@ -1351,8 +1356,6 @@ Hermes.prototype = {
                             // are free to set our own and capture the breadcrumb
                             xhr.onreadystatechange = onreadystatechangeHandler;
                         }
-
-                        xhr.setRequestHeader('X-Requested-User', self._username);
 
                         return origSend.apply(this, arguments);
                     },
