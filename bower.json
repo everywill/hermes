@@ -1,0 +1,17 @@
+{
+  "name": "kaola-hermes",
+  "description": "Apollo SDK for javascript",
+  "main": "dist/hermes.min.js",
+  "authors": [
+    "everywill"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/everywill/hermes",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
