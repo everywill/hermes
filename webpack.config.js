@@ -6,7 +6,7 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         library: 'Hermes',
         libraryTarget: 'umd',
-        filename: 'hermes.min.js'
+        filename: 'hermes.js'
     },
     module: {
         rules: [
@@ -21,5 +21,5 @@ module.exports = {
         ]
     },
     plugins: [],
-    mode: 'production'
+    mode: 'development'
 };

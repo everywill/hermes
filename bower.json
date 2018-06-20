@@ -1,7 +1,7 @@
 {
   "name": "kaola-hermes",
   "description": "Apollo SDK for javascript",
-  "main": "dist/hermes.min.js",
+  "main": "dist/hermes.js",
   "authors": [
     "everywill"
   ],

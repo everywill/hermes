@@ -1,55 +1,56 @@
 /*global XDomainRequest:false */
 
-let TraceKit = require('../vendor/TraceKit/tracekit');
-let JankMonitor = require('../vendor/performance/jank-monitor');
-let stringify = require('../vendor/json-stringify-safe/stringify');
-let md5 = require('../vendor/md5/md5');
-let HermesConfigError = require('./configError');
+const TraceKit = require('../vendor/TraceKit/tracekit');
+const JankMonitor = require('../vendor/performance/jank-monitor');
+const stringify = require('../vendor/json-stringify-safe/stringify');
+const md5 = require('../vendor/md5/md5');
+const aes = require('../vendor/aes/aes');
+const HermesConfigError = require('./configError');
 
-let utils = require('./utils');
-let isErrorEvent = utils.isErrorEvent;
-let isDOMError = utils.isDOMError;
-let isDOMException = utils.isDOMException;
-let isError = utils.isError;
-let isObject = utils.isObject;
-let isPlainObject = utils.isPlainObject;
-let isUndefined = utils.isUndefined;
-let isFunction = utils.isFunction;
-let isString = utils.isString;
-let isArray = utils.isArray;
-let isEmptyObject = utils.isEmptyObject;
-let each = utils.each;
-let objectMerge = utils.objectMerge;
-let truncate = utils.truncate;
-let objectFrozen = utils.objectFrozen;
-let hasKey = utils.hasKey;
-let joinRegExp = utils.joinRegExp;
-let urlencode = utils.urlencode;
-let uuid4 = utils.uuid4;
-let htmlTreeAsString = utils.htmlTreeAsString;
-let isSameException = utils.isSameException;
-let isSameStacktrace = utils.isSameStacktrace;
-let parseUrl = utils.parseUrl;
-let fill = utils.fill;
-let supportsFetch = utils.supportsFetch;
-let supportsReferrerPolicy = utils.supportsReferrerPolicy;
-let serializeKeysForMessage = utils.serializeKeysForMessage;
-let serializeException = utils.serializeException;
-let sanitize = utils.sanitize;
+const utils = require('./utils');
+const isErrorEvent = utils.isErrorEvent;
+const isDOMError = utils.isDOMError;
+const isDOMException = utils.isDOMException;
+const isError = utils.isError;
+const isObject = utils.isObject;
+const isPlainObject = utils.isPlainObject;
+const isUndefined = utils.isUndefined;
+const isFunction = utils.isFunction;
+const isString = utils.isString;
+const isArray = utils.isArray;
+const isEmptyObject = utils.isEmptyObject;
+const each = utils.each;
+const objectMerge = utils.objectMerge;
+const truncate = utils.truncate;
+const objectFrozen = utils.objectFrozen;
+const hasKey = utils.hasKey;
+const joinRegExp = utils.joinRegExp;
+const urlencode = utils.urlencode;
+const uuid4 = utils.uuid4;
+const htmlTreeAsString = utils.htmlTreeAsString;
+const isSameException = utils.isSameException;
+const isSameStacktrace = utils.isSameStacktrace;
+const parseUrl = utils.parseUrl;
+const fill = utils.fill;
+const supportsFetch = utils.supportsFetch;
+const supportsReferrerPolicy = utils.supportsReferrerPolicy;
+const serializeKeysForMessage = utils.serializeKeysForMessage;
+const serializeException = utils.serializeException;
+const sanitize = utils.sanitize;
 
-let wrapConsoleMethod = require('./console').wrapMethod;
-
-let dsnKeys = 'source protocol user pass host port path'.split(' '),
+const wrapConsoleMethod = require('./console').wrapMethod;
+/*
+const dsnKeys = 'source protocol user pass host port path'.split(' '),
     dsnPattern = /^(?:(\w+):)?\/\/(?:(\w+)(:\w+)?@)?([\w\.-]+)(?::(\d+))?(\/.*)/;
-
+*/
 function now() {
     return +new Date();
 }
 
 // This is to be defensive in environments where window does not exist (see https://github.com/getsentry/raven-js/pull/785)
-let _window = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
-let _document = _window.document;
-let _navigator = _window.navigator;
+const _window = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+const _document = _window.document;
+const _navigator = _window.navigator;
 
 function keepOriginalCallback(original, callback) {
     return isFunction(callback)
@@ -70,7 +71,7 @@ function Hermes() {
     this._lastCapturedException = null;
     this._lastData = null;
     this._lastEventId = null;
-    this._globalServer = null;
+    this._globalServer = 'https://apollo-kl.netease.com';
     this._globalKey = null;
     this._globalProject = null;
     this._globalContext = {};
@@ -146,20 +147,22 @@ Hermes.prototype = {
     TraceKit, // alias to TraceKit
 
     /*
-     * Configure Hermes with a DSN and extra options
+     * Configure Hermes with a Username and extra options
      *
-     * @param {string} dsn The public Sentry DSN
+     * @param {string} Username
      * @param {object} options Set of global options [optional]
      * @return {Hermes}
      */
-    config(dsn, options) {
+    config(username, options) {
         let self = this;
-
+        /*
         if (self._globalServer) {
             this._logDebug('error', 'Error: Hermes has already been configured');
             return self;
         }
-        if (!dsn) {
+        */
+        if (!username) {
+            this._logDebug('error', 'Error: username must be configured');
             return self;
         }
 
@@ -177,7 +180,7 @@ Hermes.prototype = {
             });
         }
 
-        self.setDSN(dsn);
+        self.setUsername(username);
 
         // "Script error." is hard coded into browsers for errors that it can't read.
         // this is the result of a script being pulled in from an external domain and CORS.
@@ -281,24 +284,18 @@ Hermes.prototype = {
     },
 
     /*
-     * Set the DSN (can be called multiple time unlike config)
+     * Set the Username (can be called multiple time unlike config)
      *
-     * @param {string} dsn The public Sentry DSN
+     * @param {string} username
      */
-    setDSN(dsn) {
-        let self = this,
-            uri = self._parseDSN(dsn),
-            lastSlash = uri.path.lastIndexOf('/'),
-            path = uri.path.substr(1, lastSlash);
+    setUsername(username) {
+        const self = this;
 
-        self._dsn = dsn;
-        self._globalKey = uri.user;
-        self._globalSecret = uri.pass && uri.pass.substr(1);
-        self._globalProject = uri.path.substr(lastSlash + 1);
+        self._username = username;
+        // self._globalServer = self._getGlobalServer(uri);
 
-        self._globalServer = self._getGlobalServer(uri);
-
-        self._globalEndpoint = `${self._globalServer}/${path}api/${self._globalProject}/store/`;
+        self._globalErrorEndpoint = `${self._globalServer}/api/${self._globalProject}/store/`;
+        self._globalViewEndpoint = `${self._globalServer}/hermuz`;
 
         // Reset backoff state since we may be pointing at a
         // new project/server
@@ -676,6 +673,14 @@ Hermes.prototype = {
         return this;
     },
 
+    reportUrlView(obj) {
+        const request = new XMLHttpRequest();
+        request.open('GET', `${this._globalViewEndpoint}?data=${btoa(JSON.stringify(obj))}`);
+        request.setRequestHeader('X-Requested-User', this._username);
+        request.send(null);
+        return this;
+    },
+
     addPlugin(plugin /*arg1, arg2, ... argN*/) {
         let pluginArgs = [].slice.call(arguments, 1);
 
@@ -866,10 +871,10 @@ Hermes.prototype = {
         // Attempt to initialize Hermes on load
         let HermesConfig = _window.HermesConfig;
         if (HermesConfig) {
-            this.config(HermesConfig.dsn, HermesConfig.config).install();
+            this.config(HermesConfig.username, HermesConfig.config).install();
         }
     },
-
+    /*
     showReportDialog(options) {
         if (
             !_document // doesn't work without a document (React native)
@@ -884,9 +889,9 @@ Hermes.prototype = {
             throw new HermesConfigError('Missing eventId');
         }
 
-        let dsn = options.dsn || this._dsn;
-        if (!dsn) {
-            throw new HermesConfigError('Missing DSN');
+        let username = options.username || this._username;
+        if (!username) {
+            throw new HermesConfigError('Missing username');
         }
 
         let encode = encodeURIComponent;
@@ -911,6 +916,8 @@ Hermes.prototype = {
         script.src = `${globalServer}/api/embed/error-page/${qs}`;
         (_document.head || _document.body).appendChild(script);
     },
+
+    */
 
     /**** Private functions ****/
     _ignoreNextOnError() {
@@ -1070,6 +1077,8 @@ Hermes.prototype = {
         if (parsedLoc.protocol === parsedFrom.protocol && parsedLoc.host === parsedFrom.host) {
             from = parsedFrom.relative;
         }
+
+        this.reportUrlView({ to, from });
 
         this.captureBreadcrumb({
             category: 'navigation',
@@ -1521,7 +1530,7 @@ Hermes.prototype = {
             installer.apply(self, [self].concat(args));
         });
     },
-
+    /*
     _parseDSN(str) {
         let m = dsnPattern.exec(str),
             dsn = {},
@@ -1541,6 +1550,7 @@ Hermes.prototype = {
 
         return dsn;
     },
+    */
 
     _getGlobalServer(uri) {
         // assemble the endpoint from the uri pieces
@@ -1999,7 +2009,7 @@ Hermes.prototype = {
             });
         }
 
-        let url = this._globalEndpoint;
+        let url = this._globalErrorEndpoint;
         (globalOptions.transport || this._makeRequest).call(this, {
             url,
             auth,
