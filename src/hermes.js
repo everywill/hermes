@@ -1352,6 +1352,8 @@ Hermes.prototype = {
                             xhr.onreadystatechange = onreadystatechangeHandler;
                         }
 
+                        xhr.setRequestHeader('X-Requested-User', self._username);
+
                         return origSend.apply(this, arguments);
                     },
                 wrappedBuiltIns
@@ -1395,6 +1397,10 @@ Hermes.prototype = {
                         if (args[1] && args[1].method) {
                             method = args[1].method;
                         }
+
+                        args[1].headers = {
+                            'X-Requested-User': self._username
+                        };
 
                         let fetchData = {
                             method,
