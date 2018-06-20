@@ -21,5 +21,5 @@ module.exports = {
         ]
     },
     plugins: [],
-    mode: 'development'
+    mode: 'production'
 };
