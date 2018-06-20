@@ -5,7 +5,7 @@ const JankMonitor = require('../vendor/performance/jank-monitor');
 const stringify = require('../vendor/json-stringify-safe/stringify');
 const md5 = require('../vendor/md5/md5');
 const aes = require('../vendor/aes/aes');
-const HermesConfigError = require('./configError');
+// const HermesConfigError = require('./configError');
 
 const utils = require('./utils');
 const isErrorEvent = utils.isErrorEvent;
@@ -270,7 +270,7 @@ Hermes.prototype = {
 
             if (self._globalOptions.performanceTiming) {
                 let timing = require('../vendor/performance/timing');
-                console.log(timing);
+                // console.log(timing);
             }
 
             // Install all of the plugins
@@ -291,7 +291,7 @@ Hermes.prototype = {
     setUsername(username) {
         const self = this;
 
-        self._username = username;
+        self._username = aes(username);
         // self._globalServer = self._getGlobalServer(uri);
 
         self._globalErrorEndpoint = `${self._globalServer}/api/${self._globalProject}/store/`;
