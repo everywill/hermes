@@ -1513,7 +1513,7 @@ Hermes.prototype = {
     },
 
     _instrumentPv() {
-        pageView(_window, reportUrlView);
+        pageView(_window, this.reportUrlView);
     },
 
     _restoreBuiltIns() {
