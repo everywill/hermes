@@ -142,7 +142,7 @@ Hermes.prototype = {
     //   See: https://github.com/getsentry/raven-js/issues/465
     VERSION: '0.0.1',
 
-    debug: false,
+    debug: true,
 
     TraceKit, // alias to TraceKit
 
