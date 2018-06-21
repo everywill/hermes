@@ -5,6 +5,7 @@ const JankMonitor = require('../vendor/performance/jank-monitor');
 const stringify = require('../vendor/json-stringify-safe/stringify');
 const md5 = require('../vendor/md5/md5');
 const aes = require('../vendor/aes/aes');
+const pageView = require('../vendor/pv/pv');
 // const HermesConfigError = require('./configError');
 
 const utils = require('./utils');
@@ -95,7 +96,8 @@ function Hermes() {
         sampleRate: 1,
         sanitizeKeys: [],
         monitorJank: false,
-        performanceTiming: true
+        performanceTiming: true,
+        pv: true
     };
     this._fetchDefaults = {
         method: 'POST',
@@ -255,6 +257,10 @@ Hermes.prototype = {
 
             if (self._globalOptions.autoBreadcrumbs) {
                 self._instrumentBreadcrumbs();
+            }
+
+            if (self._globalOptions.pv) {
+                self._instrumentPv();
             }
 
             if (self._globalOptions.monitorJank) {
@@ -1078,8 +1084,6 @@ Hermes.prototype = {
             from = parsedFrom.relative;
         }
 
-        this.reportUrlView({ to, from });
-
         this.captureBreadcrumb({
             category: 'navigation',
             data: {
@@ -1506,6 +1510,10 @@ Hermes.prototype = {
                 wrapConsoleMethod(console, level, consoleMethodCallback);
             });
         }
+    },
+
+    _instrumentPv() {
+        pageView(_window, reportUrlView);
     },
 
     _restoreBuiltIns() {
