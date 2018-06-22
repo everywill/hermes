@@ -164,8 +164,7 @@ Hermes.prototype = {
         }
         */
         if (!username) {
-            this._logDebug('error', 'Error: username must be configured');
-            return self;
+            this._logDebug('warn', 'Warn: username should be configured');
         }
 
         let globalOptions = self._globalOptions;
@@ -297,7 +296,7 @@ Hermes.prototype = {
     setUsername(username) {
         const self = this;
 
-        self._username = aes(username);
+        self._username = aes(username || 'anonymous');
         // self._globalServer = self._getGlobalServer(uri);
 
         self._globalErrorEndpoint = `${self._globalServer}/api/${self._globalProject}/store/`;
