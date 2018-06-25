@@ -1,8 +1,8 @@
 {
   "name": "@kaola/hermes",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Apollo SDK for javascript",
-  "main": "dist/hermes.min.js",
+  "main": "dist/hermes.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "precommit": "lint-staged",
