@@ -13,6 +13,7 @@ const pageView = (win, reportUrlView) => {
     }
 
     function end() {
+        endTime = tool.now();
         reportUrlView({
             // 必须为 _page 表示一次页面访问
             event: '_page',
