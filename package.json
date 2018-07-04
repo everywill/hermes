@@ -1,6 +1,6 @@
 {
   "name": "@kaola/hermes",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "Apollo SDK for javascript",
   "main": "dist/hermes.js",
   "scripts": {
