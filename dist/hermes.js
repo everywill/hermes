@@ -7153,7 +7153,7 @@ Hermes.prototype = {
         self._username = aes(username || 'anonymous');
         // self._globalServer = self._getGlobalServer(uri);
 
-        self._globalErrorEndpoint = self._globalServer + '/api/' + self._globalProject + '/store/';
+        self._globalErrorEndpoint = self._globalServer + '/api/stat/error/report';
         self._globalViewEndpoint = self._globalServer + '/hermuz';
 
         // Reset backoff state since we may be pointing at a
@@ -11029,6 +11029,20 @@ var tool = {
     }
 };
 
+var _wr = function _wr(type) {
+    var orig = window.history[type];
+    return function () {
+        var rv = orig.apply(this, arguments);
+        var e = new Event(type.toLowerCase());
+        e.arguments = arguments;
+        window.dispatchEvent(e);
+        return rv;
+    };
+};
+
+window.history.pushState = _wr('pushState');
+window.history.replaceState = _wr('replaceState');
+
 var pageView = function pageView(win, reportUrlView) {
     var startTime = void 0;
     var endTime = void 0;
@@ -11058,6 +11072,19 @@ var pageView = function pageView(win, reportUrlView) {
 
     // 监听 url 变化（包括 hash 变化）
     win.addEventListener('hashchange', function (e) {
+        // 页面发生变化，发送一次页面统计
+        end();
+        // 再次启动新的统计
+        start();
+    });
+
+    window.addEventListener('pushstate', function (event) {
+        // 页面发生变化，发送一次页面统计
+        end();
+        // 再次启动新的统计
+        start();
+    });
+    window.addEventListener('replacestate', function (event) {
         // 页面发生变化，发送一次页面统计
         end();
         // 再次启动新的统计

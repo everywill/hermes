@@ -2,6 +2,20 @@ const tool = {
     now: () => new Date().getTime()
 };
 
+const _wr = function(type) {
+    let orig = window.history[type];
+    return function() {
+        let rv = orig.apply(this, arguments);
+        let e = new Event(type.toLowerCase());
+        e.arguments = arguments;
+        window.dispatchEvent(e);
+        return rv;
+    };
+};
+
+window.history.pushState = _wr('pushState');
+window.history.replaceState = _wr('replaceState');
+
 const pageView = (win, reportUrlView) => {
     let startTime;
     let endTime;
@@ -31,6 +45,19 @@ const pageView = (win, reportUrlView) => {
 
     // 监听 url 变化（包括 hash 变化）
     win.addEventListener('hashchange', (e) => {
+        // 页面发生变化，发送一次页面统计
+        end();
+        // 再次启动新的统计
+        start();
+    });
+
+    window.addEventListener('pushstate', (event) => {
+        // 页面发生变化，发送一次页面统计
+        end();
+        // 再次启动新的统计
+        start();
+    });
+    window.addEventListener('replacestate', (event) => {
         // 页面发生变化，发送一次页面统计
         end();
         // 再次启动新的统计
