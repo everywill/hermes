@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "precommit": "lint-staged",
-    "build": "rimraf dist && webpack --progress --display-error-details"
+    "build": "rimraf dist && webpack --progress --display-error-details && node scripts/replace-node-env"
   },
   "repository": {
     "type": "git",

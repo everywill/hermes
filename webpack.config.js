@@ -1,7 +1,9 @@
 const path = require('path');
 
 module.exports = {
+    mode: 'development',
     entry: path.resolve(__dirname, 'src/singleton'),
+    devtool: false,
     output: {
         path: path.resolve(__dirname, 'dist'),
         library: 'Hermes',
@@ -19,7 +21,5 @@ module.exports = {
                 }
             }
         ]
-    },
-    plugins: [],
-    mode: 'production'
+    }
 };

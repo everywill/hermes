@@ -144,7 +144,7 @@ Hermes.prototype = {
     //   See: https://github.com/getsentry/raven-js/issues/465
     VERSION: '0.0.1',
 
-    debug: true,
+    debug: __NODE_ENV__,
 
     TraceKit, // alias to TraceKit
 
@@ -299,7 +299,7 @@ Hermes.prototype = {
         self._username = aes(username || 'anonymous');
         // self._globalServer = self._getGlobalServer(uri);
 
-        self._globalErrorEndpoint = `${self._globalServer}/api/${self._globalProject}/store/`;
+        self._globalErrorEndpoint = `${self._globalServer}/api/stat/error/report`;
         self._globalViewEndpoint = `${self._globalServer}/hermuz`;
 
         // Reset backoff state since we may be pointing at a
@@ -681,7 +681,9 @@ Hermes.prototype = {
     reportUrlView(obj) {
         const request = new XMLHttpRequest();
         request.open('GET', `${this._globalViewEndpoint}?data=${btoa(JSON.stringify(obj))}`);
-        request.setRequestHeader('X-Requested-User', this._username);
+        request.headers = Object.assign({}, request.headers, {
+            'X-Requested-User': this._username
+        });
         request.send(null);
         return this;
     },
@@ -2169,7 +2171,7 @@ Hermes.prototype = {
 
     _logDebug(level) {
         // We allow `Hermes.debug` and `Hermes.config(DSN, { debug: true })` to not make backward incompatible API change
-        if (this._originalConsoleMethods[level] && (this.debug || this._globalOptions.debug)) {
+        if (this._originalConsoleMethods[level]) {
             // In IE<10 console methods do not have their own 'apply' method
             Function.prototype.apply.call(this._originalConsoleMethods[level], this._originalConsole, [].slice.call(arguments, 1));
         }
