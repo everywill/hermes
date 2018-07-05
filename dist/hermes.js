@@ -8208,9 +8208,9 @@ Hermes.prototype = {
                         method = args[1].method;
                     }
 
-                    args[1].headers = {
+                    args[1].headers = Object.assign({}, args[1].headers, {
                         'X-Requested-User': self._username
-                    };
+                    });
 
                     var fetchData = {
                         method: method,
