@@ -233,7 +233,7 @@ Hermes.prototype = {
      */
     install() {
         let self = this;
-        if (self.isSetup() && !self._isHermesInstalled) {
+        if (self.isSetup() && !self._isHermesInstalled && !self.debug) {
             TraceKit.report.subscribe(function() {
                 self._handleOnErrorStackInfo(...arguments);
             });
