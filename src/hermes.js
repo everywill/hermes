@@ -17,7 +17,6 @@ const isObject = utils.isObject;
 const isPlainObject = utils.isPlainObject;
 const isUndefined = utils.isUndefined;
 const isFunction = utils.isFunction;
-const isString = utils.isString;
 const isArray = utils.isArray;
 const isEmptyObject = utils.isEmptyObject;
 const each = utils.each;
@@ -26,7 +25,6 @@ const truncate = utils.truncate;
 const objectFrozen = utils.objectFrozen;
 const hasKey = utils.hasKey;
 const joinRegExp = utils.joinRegExp;
-const urlencode = utils.urlencode;
 const uuid4 = utils.uuid4;
 const htmlTreeAsString = utils.htmlTreeAsString;
 const isSameException = utils.isSameException;
@@ -73,12 +71,9 @@ function Hermes() {
     this._lastData = null;
     this._lastEventId = null;
     this._globalServer = 'https://apollo-kl.netease.com';
-    this._globalKey = null;
     this._globalProject = null;
     this._globalContext = {};
     this._globalOptions = {
-        // SENTRY_RELEASE can be injected by https://github.com/getsentry/sentry-webpack-plugin
-        release: _window.SENTRY_RELEASE && _window.SENTRY_RELEASE.id,
         logger: 'javascript',
         ignoreErrors: [],
         ignoreUrls: [],
@@ -144,7 +139,7 @@ Hermes.prototype = {
     //   See: https://github.com/getsentry/raven-js/issues/465
     VERSION: '0.0.1',
 
-    debug: __NODE_ENV__,
+    debug: __NODE_ENV__ === 'development',
 
     TraceKit, // alias to TraceKit
 
@@ -199,8 +194,7 @@ Hermes.prototype = {
             xhr: true,
             console: true,
             dom: true,
-            location: true,
-            sentry: true
+            location: true
         };
 
         let autoBreadcrumbs = globalOptions.autoBreadcrumbs;
@@ -473,7 +467,7 @@ Hermes.prototype = {
     },
 
     /**
-     * Manually capture an exception and send it over to Sentry
+     * Manually capture an exception and send it
      *
      * @param {error} ex An exception to be logged
      * @param {object} options A specific set of options for this error [optional]
@@ -560,9 +554,9 @@ Hermes.prototype = {
     },
 
     /*
-     * Manually send a message to Sentry
+     * Manually send a message
      *
-     * @param {string} msg A plain message to be captured in Sentry
+     * @param {string} msg A plain message to be captured
      * @param {object} options A specific set of options for this message [optional]
      * @return {Hermes}
      */
@@ -765,18 +759,6 @@ Hermes.prototype = {
      */
     setEnvironment(environment) {
         this._globalOptions.environment = environment;
-
-        return this;
-    },
-
-    /*
-     * Set release version of application
-     *
-     * @param {string} release Typically something like a git SHA to identify version
-     * @return {Hermes}
-     */
-    setRelease(release) {
-        this._globalOptions.release = release;
 
         return this;
     },
@@ -1300,14 +1282,6 @@ Hermes.prototype = {
                     function(method, url) {
                         // preserve arity
                         let xhr = this;
-                        // if Sentry key appears in URL, don't capture
-                        if (isString(url) && url.indexOf(self._globalKey) === -1) {
-                            this.__hermes_xhr = {
-                                method,
-                                url,
-                                status_code: null
-                            };
-                        }
 
                         origOpen.apply(this, arguments);
                         if (url.indexOf('hubble.netease.com') === -1) {
@@ -1395,11 +1369,6 @@ Hermes.prototype = {
                             }
                         } else {
                             url = `${fetchInput}`;
-                        }
-
-                        // if Sentry key appears in URL, don't capture, as it's our own request
-                        if (url.indexOf(self._globalKey) !== -1) {
-                            return origFetch.apply(this, args);
                         }
 
                         if (args[1] && args[1].method) {
@@ -1919,11 +1888,6 @@ Hermes.prototype = {
             data.environment = globalOptions.environment;
         }
 
-        // Include the release if it's defined in globalOptions
-        if (globalOptions.release) {
-            data.release = globalOptions.release;
-        }
-
         // Include server_name if it's defined in globalOptions
         if (globalOptions.serverName) {
             data.server_name = globalOptions.serverName;
@@ -2005,22 +1969,11 @@ Hermes.prototype = {
 
         this._logDebug('debug', 'Hermes about to send:', data);
 
-        let auth = {
-            sentry_version: '7',
-            sentry_client: `hermes-js/${this.VERSION}`,
-            sentry_key: this._globalKey
-        };
-
-        if (this._globalSecret) {
-            auth.sentry_secret = this._globalSecret;
-        }
-
         let exception = data.exception && data.exception.values[0];
 
         // only capture 'sentry' breadcrumb is autoBreadcrumbs is truthy
         if (this._globalOptions.autoBreadcrumbs && this._globalOptions.autoBreadcrumbs.sentry) {
             this.captureBreadcrumb({
-                category: 'sentry',
                 message: exception ? (exception.type ? `${exception.type}: ` : '') + exception.value : data.message,
                 event_id: data.event_id,
                 level: data.level || 'error' // presume error unless specified
@@ -2030,7 +1983,6 @@ Hermes.prototype = {
         let url = this._globalErrorEndpoint;
         (globalOptions.transport || this._makeRequest).call(this, {
             url,
-            auth,
             data,
             options: globalOptions,
             onSuccess: function success() {
@@ -2060,8 +2012,7 @@ Hermes.prototype = {
     },
 
     _makeRequest(opts) {
-        // Auth is intentionally sent as part of query string (NOT as custom HTTP header) to avoid preflight CORS requests
-        let url = `${opts.url}?${urlencode(opts.auth)}`;
+        let url = opts.url;
 
         let evaluatedHeaders = null;
         let evaluatedFetchParameters = {};
@@ -2090,7 +2041,7 @@ Hermes.prototype = {
                     if (response.ok) {
                         opts.onSuccess && opts.onSuccess();
                     } else {
-                        let error = new Error(`Sentry error code: ${response.status}`);
+                        let error = new Error(`Hermes error code: ${response.status}`);
                         // It's called request only to keep compatibility with XHR interface
                         // and not add more redundant checks in setBackoffState method
                         error.request = response;
@@ -2098,7 +2049,7 @@ Hermes.prototype = {
                     }
                 })
                 .catch(() => {
-                    opts.onError && opts.onError(new Error('Sentry error code: network unavailable'));
+                    opts.onError && opts.onError(new Error('Hermes error code: network unavailable'));
                 });
         }
 
@@ -2121,7 +2072,7 @@ Hermes.prototype = {
                 } else if (request.status === 200) {
                     opts.onSuccess && opts.onSuccess();
                 } else if (opts.onError) {
-                    let err = new Error(`Sentry error code: ${request.status}`);
+                    let err = new Error(`Hermes error code: ${request.status}`);
                     err.request = request;
                     opts.onError(err);
                 }
@@ -2138,7 +2089,7 @@ Hermes.prototype = {
             }
             if (opts.onError) {
                 request.onerror = function() {
-                    let err = new Error('Sentry error code: XDomainRequest');
+                    let err = new Error('Hermes error code: XDomainRequest');
                     err.request = request;
                     opts.onError(err);
                 };
@@ -2188,6 +2139,5 @@ Hermes.prototype = {
 
 // Deprecations
 Hermes.prototype.setUser = Hermes.prototype.setUserContext;
-Hermes.prototype.setReleaseContext = Hermes.prototype.setRelease;
 
 module.exports = Hermes;
