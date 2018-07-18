@@ -6923,7 +6923,7 @@ function Hermes() {
     this._lastData = null;
     this._lastEventId = null;
     this._globalServer = 'https://apollo-kl.netease.com';
-    this._globalProject = null;
+    // this._globalProject = null;
     this._globalContext = {};
     this._globalOptions = {
         logger: 'javascript',
@@ -6948,7 +6948,6 @@ function Hermes() {
     };
     this._fetchDefaults = {
         method: 'POST',
-        keepalive: true,
         // Despite all stars in the sky saying that Edge supports old draft syntax, aka 'never', 'always', 'origin' and 'default
         // https://caniuse.com/#feat=referrer-policy
         // It doesn't. And it throw exception instead of ignoring this parameter...
@@ -7719,42 +7718,6 @@ Hermes.prototype = {
         }
     },
 
-    /*
-    showReportDialog(options) {
-        if (
-            !_document // doesn't work without a document (React native)
-        ) {
-            return;
-        }
-         options = options || {};
-         let lastEventId = options.eventId || this.lastEventId();
-        if (!lastEventId) {
-            throw new HermesConfigError('Missing eventId');
-        }
-         let username = options.username || this._username;
-        if (!username) {
-            throw new HermesConfigError('Missing username');
-        }
-         let encode = encodeURIComponent;
-        let qs = '';
-        qs += `?eventId=${encode(lastEventId)}`;
-        qs += `&dsn=${encode(dsn)}`;
-         let user = options.user || this._globalContext.user;
-        if (user) {
-            if (user.name) {
-                qs += `&name=${encode(user.name)}`;
-            }
-            if (user.email) {
-                qs += `&email=${encode(user.email)}`;
-            }
-        }
-         let globalServer = this._getGlobalServer(this._parseDSN(dsn));
-         let script = _document.createElement('script');
-        script.async = true;
-        script.src = `${globalServer}/api/embed/error-page/${qs}`;
-        (_document.head || _document.body).appendChild(script);
-    },
-     */
 
     /**** Private functions ****/
     _ignoreNextOnError: function _ignoreNextOnError() {
@@ -8512,28 +8475,26 @@ Hermes.prototype = {
     },
     _getHttpData: function _getHttpData() {
         if (!this._hasNavigator && !this._hasDocument) {
-            return;
+            return {};
         }
         var httpData = {};
 
         if (this._hasNavigator && _navigator.userAgent) {
-            httpData.headers = {
-                'User-Agent': navigator.userAgent
-            };
+            httpData['User-Agent'] = navigator.userAgent;
         }
 
         // Check in `window` instead of `document`, as we may be in ServiceWorker environment
         if (_window.location && _window.location.href) {
             httpData.url = _window.location.href;
         }
-
+        /*
         if (this._hasDocument && _document.referrer) {
             if (!httpData.headers) {
                 httpData.headers = {};
             }
             httpData.headers.Referer = _document.referrer;
         }
-
+        */
         return httpData;
     },
     _resetBackoff: function _resetBackoff() {
@@ -8614,15 +8575,13 @@ Hermes.prototype = {
         var globalOptions = this._globalOptions;
 
         var baseData = {
-            project: this._globalProject,
-            logger: globalOptions.logger,
-            platform: 'javascript'
+            // project: this._globalProject,
+            // logger: globalOptions.logger,
+            // platform: 'javascript'
         },
             httpData = this._getHttpData();
 
-        if (httpData) {
-            baseData.request = httpData;
-        }
+        baseData = objectMerge(baseData, httpData);
 
         // HACK: delete `trimHeadFrames` to prevent from appearing in outbound payload
         if (data.trimHeadFrames) {
@@ -8646,9 +8605,8 @@ Hermes.prototype = {
             };
         }
 
-        if (this._globalContext.user) {
-            // sentry.interfaces.User
-            data.user = this._globalContext.user;
+        if (this._username) {
+            data.username = this._username;
         }
 
         // Include the environment if it's defined in globalOptions
@@ -8735,6 +8693,18 @@ Hermes.prototype = {
         this._logDebug('debug', 'Hermes about to send:', data);
 
         var exception = data.exception && data.exception.values[0];
+        if (exception) {
+            data.type = exception.type;
+            data.message = exception.value;
+            for (var i = exception.stacktrace.frames.length - 1; i >= 0; i--) {
+                if (exception.stacktrace.frames[i].colno && exception.stacktrace.frames[i].lineno) {
+                    data.lineNo = exception.stacktrace.frames[i].lineno;
+                    data.colNo = exception.stacktrace.frames[i].colno;
+                    data.file = exception.stacktrace.frames[i].filename;
+                    break;
+                }
+            }
+        }
 
         // only capture 'sentry' breadcrumb is autoBreadcrumbs is truthy
         if (this._globalOptions.autoBreadcrumbs && this._globalOptions.autoBreadcrumbs.sentry) {
@@ -11000,12 +10970,8 @@ var pageView = function pageView(win, reportUrlView) {
     var page = void 0;
 
     function start() {
-        startTime = tool.now();
+        // startTime = tool.now();
         page = win.location.href;
-    }
-
-    function end() {
-        endTime = tool.now();
         reportUrlView({
             // 必须为 _page 表示一次页面访问
             event: '_page',
@@ -11018,35 +10984,41 @@ var pageView = function pageView(win, reportUrlView) {
         });
     }
 
+    function end() {}
+    // endTime = tool.now();
+
+
     // 默认自动启动
     start();
 
     // 监听 url 变化（包括 hash 变化）
     win.addEventListener('hashchange', function (e) {
         // 页面发生变化，发送一次页面统计
-        end();
+        // end();
         // 再次启动新的统计
         start();
     });
 
     window.addEventListener('pushstate', function (event) {
         // 页面发生变化，发送一次页面统计
-        end();
+        // end();
         // 再次启动新的统计
         start();
     });
     window.addEventListener('replacestate', function (event) {
         // 页面发生变化，发送一次页面统计
-        end();
+        // end();
         // 再次启动新的统计
         start();
     });
 
     // 当页面关闭的时候
-    win.addEventListener('beforeunload', function () {
+    /*
+    win.addEventListener('beforeunload', () => {
         // 发送一次
         end();
     });
+    */
 };
 
 module.exports = pageView;
