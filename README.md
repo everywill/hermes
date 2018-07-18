@@ -3,5 +3,5 @@
 Apollo SDK for javascript, Messager for the God.
 
 ```
-Hermes.config('username', {appkey: 'somekey', enable: true}).install()
+Hermes.config('username', {appKey: 'somekey', enable: true}).install()
 ```
