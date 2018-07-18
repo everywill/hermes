@@ -74,12 +74,16 @@ function Hermes() {
     // this._globalProject = null;
     this._globalContext = {};
     this._globalOptions = {
+        headers: {
+            'content-type': 'application/json;charset=UTF-8'
+        },
+        enable: true,
+        appKey: 0,
         logger: 'javascript',
         ignoreErrors: [],
         ignoreUrls: [],
         whitelistUrls: [],
         includePaths: [],
-        headers: null,
         collectWindowErrors: true,
         captureUnhandledRejections: true,
         maxMessageLength: 0,
@@ -232,7 +236,7 @@ Hermes.prototype = {
      */
     install() {
         let self = this;
-        if (self.isSetup() && !self._isHermesInstalled && !self.debug) {
+        if (self.isSetup() && !self._isHermesInstalled && !self.debug && self._globalOptions.enable) {
             TraceKit.report.subscribe(function() {
                 self._handleOnErrorStackInfo(...arguments);
             });
@@ -289,6 +293,7 @@ Hermes.prototype = {
     setUsername(username) {
         const self = this;
 
+        self._raw_username = username;
         self._username = aes(username || 'anonymous');
         // self._globalServer = self._getGlobalServer(uri);
 
@@ -1831,8 +1836,11 @@ Hermes.prototype = {
             };
         }
 
-        if (this._username) {
-            data.username = this._username;
+        if (this._raw_username) {
+            data.username = this._raw_username;
+        }
+        if (globalOptions.appKey) {
+            data.appKey = globalOptions.appKey;
         }
 
         // Include the environment if it's defined in globalOptions
