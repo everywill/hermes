@@ -1,7 +1,3 @@
-'use strict';
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
 var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
 function createCommonjsModule(fn, module) {
@@ -10616,5 +10612,5 @@ var singleton = Hermes$1;
 var Client = hermes;
 singleton.Client = Client;
 
-exports.default = singleton;
-exports.Client = Client;
+export default singleton;
+export { Client };

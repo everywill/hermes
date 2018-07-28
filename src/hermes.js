@@ -140,9 +140,9 @@ Hermes.prototype = {
     // webpack (using a build step causes webpack #1617). Grunt verifies that
     // this value matches package.json during build.
     //   See: https://github.com/getsentry/raven-js/issues/465
-    VERSION: '0.0.1',
+    VERSION: '0.2.1',
 
-    debug: __NODE_ENV__ === 'development',
+    debug: process.env.NODE_ENV === 'development',
 
     TraceKit, // alias to TraceKit
 
@@ -236,7 +236,7 @@ Hermes.prototype = {
      */
     install() {
         let self = this;
-        if (self.isSetup() && !self._isHermesInstalled && !self.debug && self._globalOptions.enable) {
+        if (self.isSetup() && !self._isHermesInstalled && (self._globalOptions.enable || !self.debug)) {
             TraceKit.report.subscribe(function() {
                 self._handleOnErrorStackInfo(...arguments);
             });
