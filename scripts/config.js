@@ -3,6 +3,7 @@ const replace = require('rollup-plugin-replace');
 const buble = require('rollup-plugin-buble');
 const cjs = require('rollup-plugin-commonjs');
 const node = require('rollup-plugin-node-resolve');
+
 const version = process.env.VERSION || require('../package.json').version;
 
 const resolve = p => path.resolve(__dirname, '../', p);

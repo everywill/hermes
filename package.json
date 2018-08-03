@@ -1,6 +1,6 @@
 {
   "name": "@kaola/hermes",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Apollo SDK for javascript",
   "files": [
     "src",
@@ -14,7 +14,9 @@
     "dev": "rollup -w -c scripts/config.js --environment TARGET:umd",
     "dev:esm": "rollup -w -c scripts/config.js --environment TARGET:esm",
     "dev:cjs": "rollup -w -c scripts/config.js --environment TARGET:cjs",
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.js",
+    "version": "npm run build && git add -A dist",
+    "postversion": "git push && git push --tags"
   },
   "repository": {
     "type": "git",
