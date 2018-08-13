@@ -8596,6 +8596,10 @@ Hermes.prototype = {
 
         var globalOptions = self._globalOptions;
 
+        if (!options.hasOwnProperty('enable')) {
+            options.enable = 'pass';
+        }
+
         // merge in options
         if (options) {
             each$1(options, function (key, value) {
@@ -8665,7 +8669,8 @@ Hermes.prototype = {
      */
     install: function install() {
         var self = this;
-        if (self.isSetup() && !self._isHermesInstalled && (self._globalOptions.enable || !self.debug)) {
+        var environmentEnable = self._globalOptions.enable === 'pass' ? !self.debug : self._globalOptions.enable;
+        if (environmentEnable && self.isSetup() && !self._isHermesInstalled) {
             tracekit.report.subscribe(function() {
                 self._handleOnErrorStackInfo.apply(self, arguments);
             });
