@@ -61,4 +61,4 @@ module.exports = Hermes;
  *
  * It should "just work".
  */
-module.exports.Client = HermesConstructor;
+// module.exports.Client = HermesConstructor;

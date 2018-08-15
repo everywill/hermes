@@ -153,7 +153,7 @@ Hermes.prototype = {
      * @param {object} options Set of global options [optional]
      * @return {Hermes}
      */
-    config(username, options) {
+    config(username, options = {}) {
         let self = this;
         /*
         if (self._globalServer) {
