@@ -7,7 +7,7 @@ npm i @kaola/hermes -S
 ```
 或者直接cdn获取最新版本
 ```
-<script src="https://haitao.nos.netease.com/hermes.min.0.3.2.js"></script>
+<script src="https://haitao.nos.netease.com/hermes.min.0.3.4.js"></script>
 ```
 
 #### 初始化Hermes
