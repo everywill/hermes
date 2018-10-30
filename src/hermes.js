@@ -1249,7 +1249,7 @@ Hermes.prototype = {
                         let xhr = this;
 
                         origOpen.apply(this, arguments);
-                        if (url.indexOf('hubble.netease.com') === -1) {
+                        if (url.indexOf(_window.location.host) !== -1) {
                             xhr.setRequestHeader('X-Requested-User', self._username);
                         }
 
@@ -1340,7 +1340,7 @@ Hermes.prototype = {
                             method = args[1].method;
                         }
 
-                        if (args[1]) {
+                        if (args[1] && url.indexOf(_window.location.host) !== -1) {
                             args[1].headers = Object.assign({}, args[1].headers, {
                                 'X-Requested-User': self._username
                             });
